@@ -1,0 +1,70 @@
+﻿@page "/"
+@using BlazorJWTAuth.Components
+@inject IJSRuntime _JsRuntime
+@inject ServiceComponent serviceComponent
+
+<h1>Blazor JWT Authentication Demo!</h1>
+
+<div class="col-md-6">
+    User ID :
+    <input class="form-control" @bind="userId" />
+
+    Pass:
+    <input class="form-control" @bind="pass" />
+    <br/>
+
+    <button class="btn btn-info" @onclick="@(() => CreateToken())">Login/Create Token</button>
+    <button class="btn btn-info" @onclick="@(() => PostMethod())">Post</button>
+    <hr/>
+    <br/>
+    <label class="col-form-label">@Bearer</label>
+    <label class="col-form-label">@Message</label>
+
+</div>
+
+@code{
+    string userId;
+    string pass;
+    string Message;
+
+    [Parameter]
+    public string Bearer { get; set; }
+
+    public void CreateToken()
+    {
+        Message = "";
+        Bearer = "";
+
+        var response = serviceComponent.ResponseJson("http://localhost:52205/api/login?userId="+ userId + "&pass=" + pass + "", null, null, null, RestSharp.Method.GET);
+        if(response.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            var json = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content)["token"].ToString();
+            Bearer = json;
+            Message = "Create Token Success:" + response.StatusCode.ToString();
+        }
+        else
+        {
+            Message = "Create Token Error:" + response.StatusCode.ToString();
+        }
+    }
+
+    public void PostMethod()
+    {
+        Message = "";
+        Dictionary<string, string> header = new Dictionary<string, string>();
+        header.Add("Authorization", "Bearer" + Bearer);
+
+        var value = Guid.NewGuid().ToString();
+
+        var response = serviceComponent.ResponseJsonAuth("http://localhost:52205/api/login?userId=", value, header, RestSharp.Method.GET);
+        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            Message = "Post Success:" + response.StatusCode.ToString();
+        }
+        else
+        {
+            Message = "Post Error:" + response.StatusCode.ToString();
+        }
+
+    }
+}
